@@ -3,6 +3,7 @@ MIDIClient.init;
 MIDIIn.connectAll;
 
 ~bds = Array.new;
+// make sure u got a folder of bd samples -- update filepath as needed :)
 ~folder = PathName.new("/Users/ptrk/Documents/supercollider/projz/bd/bd-samples");
 
 (
