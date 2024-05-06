@@ -3,7 +3,7 @@ MIDIClient.init;
 MIDIIn.connectAll;
 
 ~bds = Array.new;
-~folder = PathName.new("/Users/ptrk/Documents/supercollider/projz/bd/");
+~folder = PathName.new("/Users/ptrk/Documents/supercollider/projz/bd/bd-samples");
 
 (
 ~folder.entries.do({
@@ -23,37 +23,35 @@ SynthDef.new(\sampler , {
 }).add;
 )
 
-
 (
-var lastNote, currentSampleIndex = 0;
+var lastNote, currentSampleIndex = 0, swapThresh = 0.5;
 
 MIDIdef.noteOn(\noteOnCapture, { |vel, note|
-    var currentTime, elapsedTime, expVel;
+var currentTime, elapsedTime, expVel;
+	// consider different scaling here for bd velocity?
+    expVel = vel.linexp(1, 127,0.1,0.9);
+    // [note, vel].postln;
+    if(note == 60){
+    	Synth.new(\sampler, [\buf, ~bds[currentSampleIndex].bufnum, \rate, -5.midiratio, \amp, expVel]);
+    	// Get the current time
+    	currentTime = Main.elapsedTime;
 
-	expVel = vel.linexp(1, 127,0.1,0.9);
-	// [note, vel].postln;
-	if(note == 60){
-		Synth.new(\sampler, [\buf, ~bds[currentSampleIndex].bufnum, \rate, -5.midiratio, \amp, expVel]);
-		// Get the current time
-		currentTime = Main.elapsedTime;
-
-		if (lastNote.isNil) {
-			// If lastNote is nil, it means this is the first note-on event
-			lastNote = currentTime;
-		} {
-			elapsedTime = currentTime - lastNote;
-			elapsedTime.round(0.001).postln;
-			if(elapsedTime < 0.5){
-				"sample swap!".postln;
-				currentSampleIndex = (currentSampleIndex + 1) % ~bds.size;
-				currentSampleIndex.postln;
-			};
-			// Update lastNote with the current time
-			lastNote = currentTime;
-		}
-	};
+    	if (lastNote.isNil) {
+    		// If lastNote is nil, it means this is the first note-on event
+    		lastNote = currentTime;
+    	} {
+    		elapsedTime = currentTime - lastNote;
+    		elapsedTime.round(0.001).postln;
+    		if(elapsedTime < swapThresh){
+    			"sample swap!".postln;
+    			currentSampleIndex = (currentSampleIndex + 1) % ~bds.size;
+    			currentSampleIndex.postln;
+    		};
+    		// Update lastNote with the current time
+    		lastNote = currentTime;
+    	}
+    };
 
 }, nil, // Add nil as the third argument to avoid automatic removal of the MIDIdef
 );
 )
-
